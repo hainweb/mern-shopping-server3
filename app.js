@@ -16,7 +16,7 @@ var fileUpload = require('express-fileupload');
 var db = require('./config/connection');
 var session = require('express-session'); 
 
-// CORS Middleware should be placed before route definitions
+// CORS Middleware should be placed before route definitions 
 app.use(cors({
   origin: 'http://localhost:3000', // Allow frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
