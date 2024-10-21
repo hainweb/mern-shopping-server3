@@ -8,7 +8,7 @@ const verifyLogin = (req, res, next) => {
   if (req.session.user && req.session.user.loggedIn) {
     next();
   } else {
-   next();
+  res.json({status:false})
   }
 };
 
