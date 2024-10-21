@@ -58,12 +58,13 @@ app.use(session({
     collectionName: 'sessions'
   }),
   cookie: {
-    secure: true, // true in production
+    secure: app.get('env') === 'production', // Set secure to true only in production
     httpOnly: true,
-    sameSite: 'none',  // required for cross-origin cookies
+    sameSite: 'none',  // Required for cross-origin cookies
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));
+
 
 // Database connection
 db.connect((err) => {
