@@ -64,7 +64,7 @@ router.post('/api/login', (req, res) => {
     if (response.status) {
       // Set session data for the logged-in user
       req.session.user = { loggedIn: true, ...response.user };
-      console.log('Session data set:', req.session.user);
+      console.log('Session data set newwwww:', req.session.user);
       
       // Force save the session to the store before sending the response
       req.session.save((err) => {
