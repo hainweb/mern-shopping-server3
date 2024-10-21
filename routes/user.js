@@ -46,18 +46,9 @@ router.get('/api/products', async function (req, res, next) {
 });
 
 router.get('/api/login', (req, res) => {
-  if (response.status) {
-      req.session.user = { loggedIn: true, ...response.user };
-      console.log('Session after login:', req.session);
-      
-      // Force session save and wait for it
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ error: 'Session save failed' });
-        }
-        res.json({ loggedIn: true, user: req.session.user });
-      });
+  console.log('Session User:', req.session.user); // Log session user data for debugging
+  if (req.session.user && req.session.user.loggedIn) {
+    res.json({ loggedIn: true, user: req.session.user });
   } else {
     res.json({ loggedIn: false, message: req.session.info });
     req.session.info = false;
