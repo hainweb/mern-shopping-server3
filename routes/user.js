@@ -64,20 +64,36 @@ router.get('/api/login', (req, res) => {
   }
 });
 
+// POST /api/login route
 router.post('/api/login', (req, res) => {
-  console.log('from react',req.body);
-   
+  console.log('Login request from React:', req.body);
+  
+  // Call the login helper function
   userHelpers.doLogin(req.body).then((response) => {
     if (response.status) {
-      req.session.user = { loggedIn: true, ...response.user }; 
-      console.log('session',req.session.user);
-      res.json({loggedIn:true,user:req.session.user})
-      console.log('session1',req.session.user);
+      // Set session data for the logged-in user
+      req.session.user = { loggedIn: true, ...response.user };
+      console.log('Session data set:', req.session.user);
+      
+      // Force save the session to the store before sending the response
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ error: 'Session save failed' });
+        }
+        // Session saved successfully, return the logged-in status and user data
+        res.json({ loggedIn: true, user: req.session.user });
+        console.log('Session successfully saved and response sent:', req.session.user);
+      });
       
     } else {
+      // Handle login error
       req.session.loginErr = "Invalid username or password";
-      res.json({loggedIn:false,message:req.session.loginErr})
+      res.json({ loggedIn: false, message: req.session.loginErr });
     }
+  }).catch((err) => {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed' });
   });
 });
 
