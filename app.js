@@ -50,6 +50,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(fileUpload());
 
+console.log('Environment:', app.get('env')); // Should print 'production' on Render
+
+
 app.use(session({
   secret: 'ajinajinshoppingsecretisajin',
   resave: false,
@@ -59,12 +62,13 @@ app.use(session({
     collectionName: 'sessions'
   }),
   cookie: {
-    secure: false, // Set secure to true only in production
+    secure: app.get('env') === 'production',  // Ensure this is set to 'true' in production (HTTPS)
     httpOnly: true,
-    sameSite: 'none',  // Required for cross-origin cookies
+    sameSite: 'none', // Required for cross-origin cookies
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));
+
 
 
 // Database connection
