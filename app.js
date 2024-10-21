@@ -18,7 +18,7 @@ var session = require('express-session');
 
 // CORS Middleware should be placed before route definitions 
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow frontend
+  origin: 'https://mern-shopping-client3.onrender.com', // Allow frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'], // Fixed typo from 'Contend-Type' to 'Content-Type'
   credentials: true // Allow credentials (cookies/sessions)
