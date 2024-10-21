@@ -18,11 +18,12 @@ var session = require('express-session');
 
 // CORS Middleware should be placed before route definitions 
 app.use(cors({
-  origin: 'https://mern-shopping-client3.onrender.com', // Allow frontend
+  origin: 'https://mern-shopping-client3.onrender.com', // Your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'], // Fixed typo from 'Contend-Type' to 'Content-Type'
-  credentials: true // Allow credentials (cookies/sessions)
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true  // Allow credentials (cookies) to be sent with requests
 }));
+
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,7 +59,7 @@ app.use(session({
     collectionName: 'sessions'
   }),
   cookie: {
-    secure: app.get('env') === 'production', // Set secure to true only in production
+    secure: false, // Set secure to true only in production
     httpOnly: true,
     sameSite: 'none',  // Required for cross-origin cookies
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
