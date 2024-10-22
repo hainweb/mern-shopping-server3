@@ -12,38 +12,95 @@ const verifyLogin = (req, res, next) => {
   }
 };
 
+const verifySession = (req, res, next) => {
+  console.log('Verifying session:', req.session?.id);
+  console.log('Session user:', req.session?.user);
+  
+  if (req.session && req.session.user && req.session.user.loggedIn) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
+  }
+};
 /* GET home page. */
-router.get('/api/products', async function (req, res, next) {
-  let user = req.session.user;
-  let cartCount = null;
-  console.log('session',req.session.user);
-  if (user) {
-    console.log('in user');
-    
-    // Fetch cart count and wishlist 
-    cartCount = await userHelpers.getCartCount(req.session.user._id);
-    let wishlist = await userHelpers.getWishlist(req.session.user._id);
 
-    // Fetch products
+// Updated login route with better session handling
+router.post('/api/login', async (req, res) => {
+  try {
+    console.log('Login request from React:', req.body);
+    const response = await userHelpers.doLogin(req.body);
+    
+    if (response.status) {
+      // Set session data
+      req.session.user = {
+        loggedIn: true,
+        _id: response.user._id,
+        Name: response.user.Name,
+        Mobile: response.user.Mobile
+      }; // Don't store password in session
+      
+      // Save session explicitly
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          resolve();
+        });
+      });
+      
+      console.log('Session saved:', req.session.user);
+      res.json({ loggedIn: true, user: req.session.user });
+    } else {
+      res.json({ loggedIn: false, message: "Invalid username or password" });
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Updated products route with session verification
+router.get('/api/products', async (req, res) => {
+  try {
+    console.log('Session check in products:', req.session?.id);
+    console.log('User in session:', req.session?.user);
+
+    if (!req.session) {
+      console.error('No session object found');
+      return res.status(500).json({ error: 'Session not initialized' });
+    }
+
+    const user = req.session.user;
+    let cartCount = null;
     let products = await productHelpers.getAllProducts();
 
-    // Mark products that are in the wishlist
-    products.forEach(product => {
-      product.isInWishlist = wishlist.products.some(item => item.item.toString() === product._id.toString());
-    });
+    if (user && user.loggedIn) {
+      console.log('Logged in user accessing products:', user._id);
+      cartCount = await userHelpers.getCartCount(user._id);
+      const wishlist = await userHelpers.getWishlist(user._id);
+      
+      // Add wishlist status to products
+      products = products.map(product => ({
+        ...product,
+        isInWishlist: wishlist.products.some(item => 
+          item.item.toString() === product._id.toString()
+        )
+      }));
 
-    // Render the page with products, user, cartCount, and wishlist status
-    
-    res.json({products,user,cartCount})
-  } else {
-    console.log('no user');
-    
-    // If no user is logged in, fetch products and render the page without wishlist
-    productHelpers.getAllProducts().then((products) => {
-      res.json({products})
-    });
-  } 
+      res.json({ products, user, cartCount });
+    } else {
+      console.log('No user in session, sending products only');
+      res.json({ products });
+    }
+  } catch (error) {
+    console.error('Error in /api/products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
 });
+
+// Add a session check middleware for protected routes
+
+
+
 
 router.get('/api/login', (req, res) => {
   console.log('Session User:', req.session.user); // Log session user data for debugging
@@ -55,38 +112,7 @@ router.get('/api/login', (req, res) => {
   }
 });
 
-// POST /api/login route
-router.post('/api/login', (req, res) => {
-  console.log('Login request from React:', req.body);
-  
-  // Call the login helper function
-  userHelpers.doLogin(req.body).then((response) => {
-    if (response.status) {
-      // Set session data for the logged-in user
-      req.session.user = { loggedIn: true, ...response.user };
-      console.log('Session data set newwwww:', req.session.user);
-      
-      // Force save the session to the store before sending the response
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ error: 'Session save failed' });
-        }
-        // Session saved successfully, return the logged-in status and user data
-        res.json({ loggedIn: true, user: req.session.user });
-        console.log('Session successfully saved and response sent:', req.session.user);
-      });
-      
-    } else {
-      // Handle login error
-      req.session.loginErr = "Invalid username or password";
-      res.json({ loggedIn: false, message: req.session.loginErr });
-    }
-  }).catch((err) => {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
-  });
-});
+
 
 router.get('/api/signup', (req, res) => {
 
