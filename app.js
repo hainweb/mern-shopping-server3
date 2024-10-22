@@ -53,21 +53,29 @@ app.use(fileUpload());
 console.log('Environment:', app.get('env')); // Should print 'production' on Render
 
 
-app.use(session({
+// Session configuration (add this before your routes)
+const sessionMiddleware = session({
   secret: 'ajinajinshoppingsecretisajin',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart',
-    collectionName: 'sessions'
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60, // Session TTL (1 day)
+    autoRemove: 'native',
+    touchAfter: 24 * 3600 // Time period in seconds between session updates
   }),
   cookie: {
-    secure: app.get('env') === 'production',  // Ensure this is set to 'true' in production (HTTPS)
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'none', // Required for cross-origin cookies
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+});
+
+// Add this before your routes
+app.set('trust proxy', 1);
+app.use(sessionMiddleware);
 
 
 
