@@ -42,7 +42,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(fileUpload());
 console.log('Environment:', app.get('env')); // Should print 'production' on Render
 // Session configuration (add this before your routes)
