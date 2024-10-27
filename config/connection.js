@@ -1,26 +1,20 @@
-// config/connection.js
 const { MongoClient } = require('mongodb');
+const state = { db: null };
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart';
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-});
- 
-const connect = () => {
-  return client.connect()
-    .then(() => {
-      console.log('Database Connected Successfully');
-      return client; // Return client if needed
-    })
-    .catch((err) => {
-      console.error('Database connection error:', err);
-      throw err; // Re-throw to handle in app.js
-    });
+module.exports.connect = async function (done) {
+  const url = 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart';
+  const dbname = 'shopping';
+
+  try {
+    const client = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+    state.db = client.db(dbname);
+    done();
+  } catch (err) {
+    console.error('Failed to connect to MongoDB', err);
+    done(err);
+  }
 };
 
-
-module.exports = { connect, client };
+module.exports.get = function () {
+  return state.db;
+};
