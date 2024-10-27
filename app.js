@@ -143,6 +143,9 @@ app.use('/admin', adminRouter);
 app.use('/delivery', deliverRouter);
 app.use('/superAdmin', superAdminRouter);
 
+// Static public directory 
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 // 404 handler
 app.use((req, res, next) => {
   next(createError(404));
