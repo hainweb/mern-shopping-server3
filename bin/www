@@ -12,13 +12,10 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
-const port = 7000; // Replace with your preferred port
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
-
+// Use the environment port or a default port if not specified
+const port = normalizePort(process.env.PORT || '7000');
 app.set('port', port);
+
 /**
  * Create HTTP server.
  */
@@ -91,4 +88,5 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  console.log(`Server is running on ${bind}`);
 }
