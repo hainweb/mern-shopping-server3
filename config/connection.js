@@ -10,16 +10,17 @@ const client = new MongoClient(uri, {
   socketTimeoutMS: 45000,
 });
 
-const connect = (callback) => {
-  client.connect()
+const connect = () => {
+  return client.connect()
     .then(() => {
       console.log('Database Connected Successfully');
-      if (callback) callback(null, client);
+      return client; // Return client if needed
     })
     .catch((err) => {
       console.error('Database connection error:', err);
-      if (callback) callback(err);
+      throw err; // Re-throw to handle in app.js
     });
 };
+
 
 module.exports = { connect, client };
