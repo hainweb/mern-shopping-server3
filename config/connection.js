@@ -1,20 +1,31 @@
-const { MongoClient } = require('mongodb');
-const state = { db: null };
+// config/connection.js
+const mongoose = require('mongoose');
 
-module.exports.connect = async function (done) {
-  const url = 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart';
-  const dbname = 'shopping';
+const connect = (callback) => {
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000
+  })
+  .then(() => {
+    console.log('Database Connected Successfully');
+    if (callback) callback(null);
+  })
+  .catch((err) => {
+    console.error('Database connection error:', err);
+    if (callback) callback(err);
+  });
+};
 
-  try {
-    const client = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
-    state.db = client.db(dbname);
-    done();
-  } catch (err) {
-    console.error('Failed to connect to MongoDB', err);
-    done(err);
+module.exports = { connect };
+
+// In app.js
+db.connect((err) => {
+  if (err) {
+    console.log('Database connection failed:', err);
+  } else {
+    console.log('Database Connected Successfully');
   }
-};
-
-module.exports.get = function () {
-  return state.db;
-};
+});
