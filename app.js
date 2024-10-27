@@ -25,7 +25,7 @@ app.use(cors({
 app.set('views', path.join(dirname, 'views'));
 app.set('view engine', 'hbs');
 app.engine('hbs', hbs.engine({
-  extname: 'hbs', defaultLayout: 'layout', layoutsDir: dirname + '/views/layout/', partialsDir: dirname + '/views/partials/',
+  extname: 'hbs', defaultLayout: 'layout', layoutsDir: __dirname + '/views/layout/', partialsDir: __dirname + '/views/partials/',
   helpers: {
     lt: function (v1, v2) {
       return v1 < v2;
