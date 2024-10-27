@@ -22,7 +22,7 @@ app.use(cors({
   credentials: true  // Allow credentials (cookies) to be sent with requests
 }));
 // View engine setup
-app.set('views', path.join(dirname, 'views'));
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 app.engine('hbs', hbs.engine({
   extname: 'hbs', defaultLayout: 'layout', layoutsDir: __dirname + '/views/layout/', partialsDir: __dirname + '/views/partials/',
