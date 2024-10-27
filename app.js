@@ -1,116 +1,197 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var cors = require('cors');
+// Required dependencies
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const cors = require('cors');
 const MongoStore = require('connect-mongo');
-var userRouter = require('./routes/user');
-var adminRouter = require('./routes/admin');
-var deliverRouter = require('./routes/delivery');
-var superAdminRouter = require('./routes/superAdmin');
+const hbs = require('express-handlebars');
+const fileUpload = require('express-fileupload');
+const session = require('express-session');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const winston = require('winston');
 
-var hbs = require('express-handlebars');
-var app = express();
-var fileUpload = require('express-fileupload');
-var db = require('./config/connection');
-var session = require('express-session'); 
+// Route imports
+const userRouter = require('./routes/user');
+const adminRouter = require('./routes/admin');
+const deliverRouter = require('./routes/delivery');
+const superAdminRouter = require('./routes/superAdmin');
+const db = require('./config/connection');
 
-// CORS Middleware should be placed before route definitions 
+// Initialize express
+const app = express();
+
+// Logger setup
+const customLogger = winston.createLogger({
+  level: 'error',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log' }),
+    new winston.transports.Console({
+      format: winston.format.simple()
+    })
+  ]
+});
+
+// Rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+
+// Memory cache setup
+const mcache = require('memory-cache');
+const cache = (duration) => {
+  return (req, res, next) => {
+    const key = '__express__' + req.originalUrl || req.url;
+    const cachedBody = mcache.get(key);
+
+    if (cachedBody) {
+      return res.send(cachedBody);
+    } else {
+      res.sendResponse = res.send;
+      res.send = (body) => {
+        mcache.put(key, body, duration * 1000);
+        res.sendResponse(body);
+      };
+      next();
+    }
+  };
+};
+
+// CORS configuration
 app.use(cors({
-  origin:'https://kingshopping.onrender.com', // Your frontend URL
+  origin: 'https://kingshopping.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true  // Allow credentials (cookies) to be sent with requests
+  credentials: true
 }));
 
+// Security and optimization middleware
+app.use(helmet());
+app.use(compression());
+app.use(limiter);
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 app.engine('hbs', hbs.engine({
-  extname: 'hbs', defaultLayout: 'layout', layoutsDir: __dirname + '/views/layout/', partialsDir: __dirname + '/views/partials/',
+  extname: 'hbs',
+  defaultLayout: 'layout',
+  layoutsDir: __dirname + '/views/layout/',
+  partialsDir: __dirname + '/views/partials/',
   helpers: {
-    lt: function (v1, v2) {
-      return v1 < v2;
-    },
-    eq: function (v1, v2) {
-      return v1 === v2;
-    },
-    multiply: function (v1, v2) {
-      return v1 * v2;
-    }
+    lt: (v1, v2) => v1 < v2,
+    eq: (v1, v2) => v1 === v2,
+    multiply: (v1, v2) => v1 * v2
   }
 }));
 
+// Standard middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(fileUpload());
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+}));
 
-console.log('Environment:', app.get('env')); // Should print 'production' on Render
-
-
-// Session configuration (add this before your routes)
-const sessionMiddleware = session({
-  secret: 'ajinajinshoppingsecretisajin',
+// Session configuration
+const sessionConfig = {
+  secret: process.env.SESSION_SECRET || 'ajinajinshoppingsecretisajin',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart',
+    mongoUrl: process.env.MONGODB_URI || 'mongodb+srv://ajinrajeshhillten:5PeT8NxReh3zCwou@shoppingcart.jv3gz.mongodb.net/?retryWrites=true&w=majority&appName=ShoppingCart',
     collectionName: 'sessions',
-    ttl: 24 * 60 * 60, // Session TTL (1 day)
-    autoRemove: 'native',
-    touchAfter: 24 * 3600 // Time period in seconds between session updates
+    ttl: 24 * 60 * 60,
+    touchAfter: 24 * 3600,
+    mongoOptions: {
+      useUnifiedTopology: true
+    }
   }),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
-});
+};
 
-// Add this before your routes
 app.set('trust proxy', 1);
-app.use(sessionMiddleware);
+app.use(session(sessionConfig));
 
+// Static file serving with cache
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css') || path.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+    }
+  }
+}));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
+});
 
 // Database connection
-db.connect((err) => {
-  if (err) {
-    console.log('Database not connected' + err);
-  } else {
-    console.log('Database Connected ');
-  }
-});
+db.connect()
+  .then(() => {
+    customLogger.info('Database connected successfully');
+  })
+  .catch(err => {
+    customLogger.error('Database connection error:', err);
+    process.exit(1);
+  });
 
-// Route handling
-app.use('/', userRouter);
+// Routes
+app.use('/', cache(300), userRouter);
 app.use('/admin', adminRouter);
 app.use('/delivery', deliverRouter);
 app.use('/superAdmin', superAdminRouter);
 
-// Static public directory
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
-// Catch 404 and forward to error handler
-app.use(function (req, res, next) {
+// 404 handler
+app.use((req, res, next) => {
   next(createError(404));
 });
 
 // Error handler
-app.use(function (err, req, res, next) {
-  // Set locals, only providing error in development
+app.use((err, req, res, next) => {
+  customLogger.error({
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date()
+  });
+
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // Render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  customLogger.info('SIGTERM signal received: closing HTTP server');
+  app.close(() => {
+    customLogger.info('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 module.exports = app;
