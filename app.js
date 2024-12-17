@@ -16,7 +16,7 @@ var db = require('./config/connection');
 var session = require('express-session'); 
 // CORS Middleware should be placed before route definitions 
 app.use(cors({
-  origin:'https://kingshopping.onrender.com', // Your frontend URL
+  origin:['https://kingshopping.onrender.com','https://king-cart-phone.onrender.com'], // Your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true  // Allow credentials (cookies) to be sent with requests
