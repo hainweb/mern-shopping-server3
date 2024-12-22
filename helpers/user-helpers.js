@@ -82,7 +82,7 @@ module.exports = {
           ).then(() => {
             resolve()
           }) */
-          resolve({status:false ,message:"This product is already in cart"})
+          resolve({status:false ,message:"Already In Cart"})
         } else {
           db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId) },
             {
