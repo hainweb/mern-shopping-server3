@@ -122,8 +122,8 @@ router.get('/api/add-to-cart/:id', verifyLogin, (req, res) => {
 
   let proId = req.params.id
   let userId = req.session.user._id
-  userHelpers.addToCart(proId, userId).then(() => {
-    res.json({message})
+  userHelpers.addToCart(proId, userId).then((response) => {
+    res.json(response)
 
   })
 })
