@@ -75,13 +75,14 @@ module.exports = {
         let proExist = userCart.products.findIndex(product => product.item == proId)
         console.log(proExist);
         if (proExist != -1) {
-          db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId), 'products.item': new ObjectId(proId) },
+          /*db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId), 'products.item': new ObjectId(proId) },
             {
               $inc: { 'products.$.quantity': 1 }
             }
           ).then(() => {
             resolve()
-          })
+          }) */
+          resolve(message:"This product is already in cart")
         } else {
           db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId) },
             {
