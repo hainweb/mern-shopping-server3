@@ -91,7 +91,7 @@ module.exports = {
 
             }
           ).then((response) => {
-            resolve(status:true)
+            resolve({status:true})
           })
 
         }
@@ -104,7 +104,7 @@ module.exports = {
         console.log(cartObj);
 
         db.get().collection(collection.CART_COLLECTION).insertOne(cartObj).then((response) => {
-          resolve(status:true)
+          resolve({status:true})
         })
       }
     })
