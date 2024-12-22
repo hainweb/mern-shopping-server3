@@ -82,7 +82,7 @@ module.exports = {
           ).then(() => {
             resolve()
           }) */
-          resolve(message:"This product is already in cart")
+          resolve(status:false ,message:"This product is already in cart")
         } else {
           db.get().collection(collection.CART_COLLECTION).updateOne({ user: new ObjectId(userId) },
             {
@@ -91,7 +91,7 @@ module.exports = {
 
             }
           ).then((response) => {
-            resolve()
+            resolve(status:true)
           })
 
         }
@@ -104,7 +104,7 @@ module.exports = {
         console.log(cartObj);
 
         db.get().collection(collection.CART_COLLECTION).insertOne(cartObj).then((response) => {
-          resolve()
+          resolve(status:true)
         })
       }
     })
