@@ -81,6 +81,7 @@ router.post('/api/signup', (req, res) => {
   console.log('api call signup');
   
   userHelpers.doSignup(req.body).then((response1) => {
+    console.log('resoponse1',response1)
     if (response1.status) {
       req.session.user = { loggedIn: true, ...response1.user };
       res.json({status:true , req.session.user});
