@@ -84,7 +84,7 @@ router.post('/api/signup', (req, res) => {
     console.log('resoponse1',response1)
     if (response1.status) {
       req.session.user = { loggedIn: true, ...response1.user };
-      res.json({status:true , req.session.user});
+      res.json({status:true , user:req.session.user});
     } else {
       req.session.signupErr = 'This number is already taken';
       res.json({status:false});
